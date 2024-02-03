@@ -1,20 +1,18 @@
-
 {% extends "base.html" %}{% load static %}
-{% block title %}分享机器{% endblock %}
+{% block title %}Share Machine{% endblock %}
 {% block link %}<link rel="stylesheet" href="{% static 'layui/css/style.css' %}">{% endblock %}
-{% block legend_name %}分享机器给其他用户{% endblock %}
+{% block legend_name %}Share Machine with Other Users{% endblock %}
 {% block content %}
- 
  
 <div class="layui-container">
     <div class="layui-card layui-col-md3-offset2">
-        <div class="layui-card-header">请将要分享的机器调整到右侧</div>
+        <div class="layui-card-header">Adjust the Machine to be Shared on the Right Side</div>
         <div id="showdevice"></div>
-        <button id="create" type="button" class="layui-btn padding-5" lay-on="getData">生成分享链接</button>
+        <button id="create" type="button" class="layui-btn padding-5" lay-on="getData">Generate Sharing Link</button>
     </div> 
-    <div class="layui-card">1、链接有效期为15分钟，切勿随意分享给他人。</div>
-    <div class="layui-card">2、所分享的机器，被分享人享有相同的权限，如果机器设置了保存密码，被分享人也可以直接连接。</div>
-    <div class="layui-card">3、为保障安全，链接有效期为15分钟、链接仅有效1次。链接一旦被（非分享人的登录用户）访问，分享生效，后续访问链接失效。</div>
+    <div class="layui-card">1. The link is valid for 15 minutes, do not share it with others casually.</div>
+    <div class="layui-card">2. The shared machine grants the same permissions to the recipient. If the machine has a saved password, the recipient can also connect directly.</div>
+    <div class="layui-card">3. For security reasons, the link is valid for 15 minutes and only effective once. Once the link is accessed by a user other than the sharer's login user, the sharing takes effect, and subsequent access links become invalid.</div>
     
     <div class="layui-card layui-col-md6-offset1">
           <table class="layui-table">
@@ -26,54 +24,42 @@
             </colgroup>
             <thead>
               <tr>
-                <th>链接地址</th>
-                <th>创建时间</th>
-                <th>ID列表</th>
+                <th>Link Address</th>
+                <th>Creation Time</th>
+                <th>ID List</th>
               </tr> 
             </thead>
             <tbody>
-            
             {% for one in sharelinks %}
               <tr>
                 <td><script> document.write(window.location);</script>/{{one.shash}} </td>
-                <td>{{one.create_time}}		</td>
-                <td>{{one.peers}}		</td>
-
+                <td>{{one.create_time}}</td>
+                <td>{{one.peers}}</td>
               </tr>
-              {% endfor %}
+            {% endfor %}
             </tbody>
           </table>
     </div> 
-    
-
 </div>
 
- <script>
+<script>
   layui.use(['transfer', 'jquery', 'layer'], function(){
     var transfer = layui.transfer;
     var $      = layui.jquery;
     var layer  = layui.layer;
 
-    //渲染
+    // Render Transfer
     transfer.render({
-      elem: '#showdevice'  //绑定元素
-      ,title: ['我的机器', '分享机器']  //自定义标题
-      //,width: 500 //定义宽度
-      //,height: 300 //定义高度
-      ,data: [//定义数据源
-      {%for peer in peers %}
-      {"value": "{{peer.id}}", "title": "{{peer.name}}"},
-      {%endfor%}
-
-      ]  //disabled 是否禁用  checked 是否选中
-      ,id: 'device' //定义索引 重新加载reload或者获取右侧数据时可以用到
+      elem: '#showdevice'  // Bind to the element
+      ,title: ['My Machines', 'Shared Machines']  // Custom titles
+      ,data: [// Data source
+        {% for peer in peers %}
+          {"value": "{{peer.id}}", "title": "{{peer.name}}"},
+        {% endfor %}
+      ]  
+      ,id: 'device' 
     });
-    $("#create_bak").click(function(){
-        
-        var getData = transfer.getData('device');
-        alert(JSON.stringify(getData));
 
-    });
     $("#create").click(function(){
         var getData = transfer.getData('device');
         $.ajax({
@@ -85,21 +71,15 @@
             },
             success:function(data){
                 if (data.code == 1) {
-                   // var myMsg = layer.msg('处理中', {
-                    //      shade: 0.4,
-                     //     time:false //取消自动关闭
-                    // });  
-                    //layer.msg('注册成功，请前往登录页登录。');
-                    layer.alert('成功！如需分享，请复制以下链接给其他人：<br>'+ window.location + '/' +data.shash, function (index) {
-                        location.reload();});                    
+                    layer.alert('Success! To share, please copy the following link to others:<br>'+ window.location + '/' +data.shash, function (index) {
+                        location.reload();
+                    });                    
                 }else {
                     layer.msg(data.msg);
                 }
             }
         });
-
     });
-
   });
-  </script>
+</script>
 {% endblock %}
