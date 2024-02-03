@@ -1,28 +1,28 @@
 {% extends "base.html" %}
 {% block title %}RustDesk WebUI{% endblock %}
-{% block legend_name %}综合屏{% endblock %}
+{% block legend_name %}Comprehensive Screen{% endblock %}
 {% block content %}
 <div style="padding: 20px; background-color: #F2F2F2;">
   <div class="layui-row layui-col-space15">
     <div class="layui-col-md15">
       <div class="layui-card">
-        <div class="layui-card-header">设备统计 - 【用户名:{{u.username}}】</div>
+        <div class="layui-card-header">Device Statistics - [Username: {{u.username}}]</div>
         <div class="layui-card-body">
           <table class="layui-table">
             <thead>
               <tr>
-                <th>客户端ID</th>
-                <th>版本</th>
-                <th>连接密码</th>
-                <th>系统用户名</th>
-                <th>计算机名</th>
-                <th>别名</th>
-                <th>平台</th>
-                <th>系统</th>
+                <th>Client ID</th>
+                <th>Version</th>
+                <th>Connection Password</th>
+                <th>System Username</th>
+                <th>Computer Name</th>
+                <th>Alias</th>
+                <th>Platform</th>
+                <th>System</th>
                 <th>CPU</th>
-                <th>内存</th>
-                <th>注册时间</th>
-                <th>更新时间</th>
+                <th>Memory</th>
+                <th>Registration Time</th>
+                <th>Last Update Time</th>
               </tr>
             </thead>
             <tbody>
@@ -51,25 +51,24 @@
     {% if u.is_admin %}
     <div class="layui-col-md15">
       <div class="layui-card">
-        <div class="layui-card-header">全部用户</div>
+        <div class="layui-card-header">All Users</div>
         <div class="layui-card-body">
           <table class="layui-table">
             <thead>
               <tr>
-                <th>客户端ID</th>
-                <th>所属用户</th>
-                <th>版本</th>
-                <th>系统用户名</th>
-                <th>计算机名</th>
-                <th>系统</th>
+                <th>Client ID</th>
+                <th>Owner</th>
+                <th>Version</th>
+                <th>System Username</th>
+                <th>Computer Name</th>
+                <th>System</th>
                 <th>CPU</th>
-                <th>内存</th>
-                <th>注册时间</th>
-                <th>更新时间</th>
+                <th>Memory</th>
+                <th>Registration Time</th>
+                <th>Last Update Time</th>
               </tr>
             </thead>
             <tbody>
-
               {% for one in all_info %}
               <tr>
                 <td>{{one.rid}} </td>
@@ -90,7 +89,6 @@
       </div>
     </div>
     {% endif %}
-
   </div>
 </div>
 
