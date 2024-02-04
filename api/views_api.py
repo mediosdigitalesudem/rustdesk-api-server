@@ -11,12 +11,10 @@ from django.db.models import Q
 import copy
 from .views_front import *
 
-
-
 def login(request):
     result = {}
     if request.method == 'GET':
-        result['error'] = '请求方式错误！请使用POST方式。'
+        result['error'] = 'Wrong request method! Please use POST.'
         return JsonResponse(result)
 
     data = json.loads(request.body.decode())
@@ -28,20 +26,20 @@ def login(request):
     autoLogin = data.get('autoLogin', True)
     rtype = data.get('type', '')
     deviceInfo = data.get('deviceInfo', '')
-    user = auth.authenticate(username=username,password=password)
+    user = auth.authenticate(username=username, password=password)
     if not user:
-        result['error'] = '帐号或密码错误！请重试，多次重试后将被锁定IP！'
+        result['error'] = 'Incorrect account or password! Please try again, multiple failed attempts will lock your IP!'
         return JsonResponse(result)
     user.rid = rid
     user.uuid = uuid
     user.autoLogin = autoLogin
-    user.rtype = rtype 
+    user.rtype = rtype
     user.deviceInfo = json.dumps(deviceInfo)
     user.save()
     
     token = RustDeskToken.objects.filter(Q(uid=user.id) & Q(username=user.username) & Q(rid=user.rid)).first()
     
-    # 检查是否过期
+    # Check if expired
     if token:
         now_t = datetime.datetime.now()
         nums = (now_t - token.create_time).seconds if now_t > token.create_time else 0
@@ -50,7 +48,7 @@ def login(request):
             token = None
     
     if not token:
-        # 获取并保存token
+        # Get and save token
         token = RustDeskToken(
             username=user.username,
             uid=user.id,
@@ -62,13 +60,13 @@ def login(request):
 
     result['access_token'] = token.access_token
     result['type'] = 'access_token'
-    result['user'] = {'name':user.username}
+    result['user'] = {'name': user.username}
     return JsonResponse(result)
 
 
 def logout(request):
     if request.method == 'GET':
-        result = {'error':'请求方式错误！'}
+        result = {'error':'Wrong request method!'}
         return JsonResponse(result)
     
     data = json.loads(request.body.decode())
@@ -76,7 +74,7 @@ def logout(request):
     uuid = data.get('uuid', '')
     user = UserProfile.objects.filter(Q(rid=rid) & Q(uuid=uuid)).first()
     if not user:
-        result = {'error':'异常请求！'}
+        result = {'error':'Abnormal request!'}
         return JsonResponse(result)
     token = RustDeskToken.objects.filter(Q(uid=user.id) & Q(rid=user.rid)).first()
     if token:
@@ -89,7 +87,7 @@ def logout(request):
 def currentUser(request):
     result = {}
     if request.method == 'GET':
-        result['error'] = '错误的提交方式！'
+        result['error'] = 'Incorrect submission method!'
         return JsonResponse(result)
     postdata = json.loads(request.body)
     rid = postdata.get('id', '')
@@ -97,7 +95,7 @@ def currentUser(request):
     
     access_token = request.META.get('HTTP_AUTHORIZATION', '')
     access_token = access_token.split('Bearer ')[-1]
-    token = RustDeskToken.objects.filter(Q(access_token=access_token) ).first()
+    token = RustDeskToken.objects.filter(Q(access_token=access_token)).first()
     user = None
     if token:
         user = UserProfile.objects.filter(Q(id=token.uid)).first()
@@ -115,15 +113,15 @@ def ab(request):
     '''
     access_token = request.META.get('HTTP_AUTHORIZATION', '')
     access_token = access_token.split('Bearer ')[-1]
-    token = RustDeskToken.objects.filter(Q(access_token=access_token) ).first()
+    token = RustDeskToken.objects.filter(Q(access_token=access_token)).first()
     if not token:
-        result = {'error':'拉取列表错误！'}
+        result = {'error':'Error pulling the list!'}
         return JsonResponse(result)
     
     if request.method == 'GET':
         result = {}
         uid = token.uid
-        tags = RustDeskTag.objects.filter(Q(uid=uid) )
+        tags = RustDeskTag.objects.filter(Q(uid=uid))
         tag_names = []
         tag_colors = {}
         if tags:
@@ -131,41 +129,41 @@ def ab(request):
             tag_colors = {str(x.tag_name):int(x.tag_color) for x in tags if x.tag_color!=''}
         
         peers_result = []
-        peers = RustDeskPeer.objects.filter(Q(uid=uid) )
+        peers = RustDeskPeer.objects.filter(Q(uid=uid))
         if peers:
             for peer in peers:
                 tmp = {
-                    'id':peer.rid,
-                    'username':peer.username,
-                    'hostname':peer.hostname,
-                    'alias':peer.alias,
-                    'platform':peer.platform,
-                    'tags':peer.tags.split(','),
-                    'hash':peer.rhash,
+                    'id': peer.rid,
+                    'username': peer.username,
+                    'hostname': peer.hostname,
+                    'alias': peer.alias,
+                    'platform': peer.platform,
+                    'tags': peer.tags.split(','),
+                    'hash': peer.rhash,
                 }
                 peers_result.append(tmp)
         
         result['updated_at'] = datetime.datetime.now()
         result['data'] = {
-            'tags':tag_names,
-            'peers':peers_result,
-            'tag_colors':json.dumps(tag_colors)
+            'tags': tag_names,
+            'peers': peers_result,
+            'tag_colors': json.dumps(tag_colors)
         }
         result['data'] = json.dumps(result['data'])
         return JsonResponse(result)
     else:
         postdata = json.loads(request.body.decode())
         data = postdata.get('data', '')
-        data = {} if data=='' else json.loads(data)
+        data = {} if data == '' else json.loads(data)
         tagnames = data.get('tags', [])
         tag_colors = data.get('tag_colors', '')
-        tag_colors = {} if tag_colors=='' else json.loads(tag_colors)
+        tag_colors = {} if tag_colors == '' else json.loads(tag_colors)
         peers = data.get('peers', [])
         
         if tagnames:
-            # 删除旧的tag
+            # Delete old tags
             RustDeskTag.objects.filter(uid=token.uid).delete()
-            # 增加新的
+            # Add new ones
             newlist = []
             for name in tagnames:
                 tag = RustDeskTag(
@@ -187,28 +185,26 @@ def ab(request):
                     alias=one['alias'],
                     platform=one['platform'],
                     tags=','.join(one['tags']),
-                    rhash=one['hash'],
-                    
-                    
+                    rhash=one['hash'],                  
                 )
                 newlist.append(peer)
             RustDeskPeer.objects.bulk_create(newlist)
 
     result = {
     'code':102,
-    'data':'更新地址簿有误'
+    'data':'Error updating the address book'
     }
     return JsonResponse(result)
 
 def sysinfo(request):
-    # 客户端注册服务后，才会发送设备信息
+    # Device information is sent only after client registration
     result = {}
     if request.method == 'GET':
-        result['error'] = '错误的提交方式！'
+        result['error'] = 'Incorrect submission method!'
         return JsonResponse(result)
     
     postdata = json.loads(request.body)
-    device = RustDesDevice.objects.filter(Q(rid=postdata['id']) & Q(uuid=postdata['uuid']) ).first()
+    device = RustDesDevice.objects.filter(Q(rid=postdata['id']) & Q(uuid=postdata['uuid'])).first()
     if not device:
         device = RustDesDevice(
             rid=postdata['id'],
@@ -225,26 +221,26 @@ def sysinfo(request):
         postdata2 = copy.copy(postdata)
         postdata2['rid'] = postdata2['id']
         postdata2.pop('id')
-        RustDesDevice.objects.filter(Q(rid=postdata['id']) & Q(uuid=postdata['uuid']) ).update(**postdata2)
+        RustDesDevice.objects.filter(Q(rid=postdata['id']) & Q(uuid=postdata['uuid'])).update(**postdata2)
     result['data'] = 'ok'
     return JsonResponse(result)
 
 def heartbeat(request):
     postdata = json.loads(request.body)
-    device = RustDesDevice.objects.filter(Q(rid=postdata['id']) & Q(uuid=postdata['uuid']) ).first()
+    device = RustDesDevice.objects.filter(Q(rid=postdata['id']) & Q(uuid=postdata['uuid'])).first()
     if device:
         device.save()
-    # token保活
+    # Token keep-alive
     create_time = datetime.datetime.now() + datetime.timedelta(seconds=EFFECTIVE_SECONDS)
-    RustDeskToken.objects.filter(Q(rid=postdata['id']) & Q(uuid=postdata['uuid']) ).update(create_time=create_time)
+    RustDeskToken.objects.filter(Q(rid=postdata['id']) & Q(uuid=postdata['uuid'])).update(create_time=create_time)
     result = {}
-    result['data'] = '在线'
+    result['data'] = 'Online'
     return JsonResponse(result)
     
 def users(request):
     result = {
     'code':1,
-    'data':'好的'
+    'data':'Alright'
     }
     return JsonResponse(result)
     
