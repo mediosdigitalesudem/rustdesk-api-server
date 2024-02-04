@@ -265,7 +265,7 @@ def share(request):
                 sharelink = sharelink[0]
                 if str(request.user.id) == str(sharelink.uid):
                     title = 'Error'
-                    msg = f'Link {url}:<br><br>Let's just say, you can't share the link with yourself, can you! '
+                    msg = f'Link {url}:<br><br>You can not share the link with yourself, can you ! '
                 else:
                     sharelink.is_used = True
                     sharelink.save()
