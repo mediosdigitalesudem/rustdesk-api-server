@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}RustDesk WebUI{% endblock %}
+{% block legend_name %}Installer Files{% endblock %}
+{% block content %}
+<div style="padding: 20px; background-color: #F2F2F2;">
+  <div class="layui-row layui-col-space15">
+    <div class="layui-col-md15">
+      <div class="layui-card">
+        <div class="layui-card-header">Installer Files for [Username: {{u.username}}]</div>
+        <div class="layui-card-body">
+          <table class="layui-table">
+            <thead>
+              <tr>
+                <th>Windows EXE</th>
+                <th>Windows Installer</th>
+                <th>Linux Installer</th>
+                <th>Mac Installer</th>
+                <th>QR Code</th>
+                <th>API URL</th>
+                <th>Key</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td> Download </td>
+                <td> Download </td>
+                <td> Download </td>
+                <td> Download </td>
+                <td> Image Here </td>
+                <td> URL Here </td>
+                <td> Key Here </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
