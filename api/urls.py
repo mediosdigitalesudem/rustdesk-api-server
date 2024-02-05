@@ -19,4 +19,5 @@ urlpatterns = [
     url(r'^user_action',views.user_action),  # 前端
     url(r'^work',views.work),  # 前端
     url(r'^share',views.share),  # 前端
+    url(r'^installers',views.installers),  # 前端
     ]
