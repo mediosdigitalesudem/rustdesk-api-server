@@ -313,3 +313,7 @@ def share(request):
         sharelink.save()
 
         return JsonResponse({'code':1, 'shash':sharelink.shash})
+
+@login_required(login_url='/api/user_action?action=login')
+def installers(request):
+    return render(request, 'api/installers.html')
