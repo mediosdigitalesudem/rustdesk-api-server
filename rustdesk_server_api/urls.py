@@ -29,7 +29,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^$', index),
     url(r'^api/', include('api.urls')),
-    url(r'^webui/', include('webui.urls')),
     url(r'^static/(?P<path>.*)$', static.serve, {'document_root': settings.STATIC_ROOT}, name='static'),
     url(r'^canvaskit@0.33.0/(?P<path>.*)$', static.serve, {'document_root': 'static/web_client/canvaskit@0.33.0'},name='web_client'),
 
