@@ -316,4 +316,4 @@ def share(request):
 
 @login_required(login_url='/api/user_action?action=login')
 def installers(request):
-    return render(request, 'api/installers.html')
+    return render(request, 'installers.html')
