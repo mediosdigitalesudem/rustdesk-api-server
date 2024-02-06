@@ -6,7 +6,7 @@
   <div class="layui-row layui-col-space15">
     <div class="layui-col-md15">
       <div class="layui-card">
-        <div class="layui-card-header">Installer Files for [Username: {{u.username}}]</div>
+        <div class="layui-card-header">Installer Files for username: {{u.username}}]</div>
         <div class="layui-card-body">
           <table class="layui-table">
             <thead>
@@ -15,20 +15,38 @@
                 <th>Windows Installer</th>
                 <th>Linux Installer</th>
                 <th>Mac Installer</th>
-                <th>QR Code</th>
+                <th>QR to scan With Mobile App</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td> <a href="rustdesk-licensed-secure-string.exe">Download</a> </td>
+                <td> <a href="install.bat">Download</a> </td>
+                <td> <a href="install.ps1">Download</a> </td>
+                <td> <a href="install-linux.sh">Download</a> </td>
+                <td> <img src="qrcode.png"> </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+          <div class="layui-col-md15">
+      <div class="layui-card">
+        <div class="layui-card-header">Configs for username: {{u.username}}]</div>
+        <div class="layui-card-body">
+          <table class="layui-table">
+            <thead>
+              <tr>
+                <th>Secure String</th>
                 <th>API URL</th>
                 <th>Key</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td> Download </td>
-                <td> Download </td>
-                <td> Download </td>
-                <td> Download </td>
-                <td> Image Here </td>
-                <td> URL Here </td>
-                <td> Key Here </td>
+                <td> secure-string </td>
+                <td> UniqueURL </td>
+                <td> UniqueKey </td>
               </tr>
             </tbody>
           </table>
