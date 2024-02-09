@@ -1,5 +1,5 @@
 import getpass
-from django.core.management.commands.createsuperuser import Command as BaseCommand
+from django.contrib.auth.management.commands.createsuperuser import Command as BaseCommand
 
 class Command(BaseCommand):
     help = 'Create a superuser with a securely entered password'
