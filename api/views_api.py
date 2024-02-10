@@ -10,6 +10,8 @@ from api.models import RustDeskToken, UserProfile, RustDeskTag, RustDeskPeer, Ru
 from django.db.models import Q
 import copy
 from .views_front import *
+from django.conf import settings
+
 
 def login(request):
     result = {}
