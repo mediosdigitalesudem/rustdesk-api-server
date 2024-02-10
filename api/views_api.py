@@ -56,7 +56,7 @@ def login(request):
             uid=user.id,
             uuid=user.uuid,
             rid=user.rid,
-            access_token=getStrMd5(str(time.time())+salt)
+            access_token=getStrMd5(str(time.time())+settings.SALT_CRED)
         )
         token.save()
 
