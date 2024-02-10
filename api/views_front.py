@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import auth
 from api.models import RustDeskPeer, RustDesDevice, UserProfile, ShareLink
 from django.forms.models import model_to_dict
+from django.conf import settings.SALT_CRED
 
 from itertools import chain
 from django.db.models.fields import DateTimeField, DateField, CharField, TextField
@@ -18,7 +19,7 @@ import time
 import hashlib
 import sys
 
-salt = 'xiaomo'
+salt = settings.SALT_CRED
 EFFECTIVE_SECONDS = 7200
 
 def getStrMd5(s):
