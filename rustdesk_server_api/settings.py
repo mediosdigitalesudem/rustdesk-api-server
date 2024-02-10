@@ -130,8 +130,7 @@ if DEBUG:
 
 else:
 
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')     # 新增
+
 with suppress(ImportError):
     from .secret_config import *  # noqa
-
-
-    STATIC_ROOT = os.path.join(BASE_DIR, 'static')     # 新增
