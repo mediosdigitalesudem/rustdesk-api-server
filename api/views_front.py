@@ -21,15 +21,10 @@ import sys
 
 EFFECTIVE_SECONDS = 7200
 
-def getStrMd5(s):
-    # Convert the string to MD5 hash
-    if not isinstance(s, (str,)):
-        s = str(s)
-
-    myHash = hashlib.md5()
-    myHash.update(s.encode())
-
-    return myHash.hexdigest()
+def getStrSha256(s):
+    input_bytes = input_str.encode('utf-8')
+    sha256_hash = hashlib.sha256(input_bytes)
+    return sha256_hash.hexdigest()
 
 def model_to_dict2(instance, fields=None, exclude=None, replace=None, default=None):
     """
@@ -307,7 +302,7 @@ def share(request):
         rustdesk_ids = ','.join(rustdesk_ids)
         sharelink = ShareLink(
             uid=request.user.id,
-            shash = getStrMd5(str(time.time())+settings.SALT_CRED),
+            shash = getStrSha256(str(time.time())+settings.SALT_CRED),
             peers=rustdesk_ids,
         )
         sharelink.save()
