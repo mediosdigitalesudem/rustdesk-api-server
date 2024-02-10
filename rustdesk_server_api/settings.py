@@ -12,8 +12,6 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 from contextlib import suppress
 import os
 from pathlib import Path
-with suppress(ImportError):
-    from .secret_config import *  # noqa
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -131,6 +129,9 @@ if DEBUG:
     STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 else:
+
+with suppress(ImportError):
+    from .secret_config import *  # noqa
 
 
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')     # 新增
