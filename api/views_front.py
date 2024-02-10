@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import auth
 from api.models import RustDeskPeer, RustDesDevice, UserProfile, ShareLink
 from django.forms.models import model_to_dict
-from django.conf import settings.SALT_CRED
+from django.conf import settings
 
 from itertools import chain
 from django.db.models.fields import DateTimeField, DateField, CharField, TextField
@@ -19,7 +19,6 @@ import time
 import hashlib
 import sys
 
-salt = settings.SALT_CRED
 EFFECTIVE_SECONDS = 7200
 
 def getStrMd5(s):
@@ -308,7 +307,7 @@ def share(request):
         rustdesk_ids = ','.join(rustdesk_ids)
         sharelink = ShareLink(
             uid=request.user.id,
-            shash = getStrMd5(str(time.time())+salt),
+            shash = getStrMd5(str(time.time())+settings.SALT_CRED),
             peers=rustdesk_ids,
         )
         sharelink.save()
