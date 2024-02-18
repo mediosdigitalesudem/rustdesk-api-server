@@ -13,18 +13,40 @@
 </head>
 
 <body>
-    <script src={% static "layui/layui.js" %}></script>
-    <script>
-        layui.use('element', function () {
-            var element = layui.element; // Navigation hover effect, sub-menu, and other features require the element module
 
-            // Listen for navigation clicks
-            element.on('nav(demo)', function (elem) {
-                //console.log(elem)
-                layer.msg(elem.text());
-            });
-        });
-    </script>
+<script src="{% static 'layui/layui.js' %}"></script>
+<script>
+layui.use('element', function() {
+    var element = layui.element;
+    // Navigation hover effect, sub-menu, and other features require the element module
+    element.on('nav(demo)', function(elem) {
+        // console.log(elem)
+        layer.msg(elem.text());
+    });
+});
+
+document.addEventListener('DOMContentLoaded', (event) => {
+    // Place your globalSearch function or any DOM-related JS here
+    window.globalSearch = function() {
+        var input, filter, tables, tr, td, txtValue;
+        input = document.getElementById("globalSearchInput");
+        filter = input.value.toUpperCase();
+        tables = document.getElementsByTagName("table");
+
+        for (let table of tables) {
+            tr = table.getElementsByTagName("tr");
+            for (let i = 1; i < tr.length; i++) {
+                let row = tr[i];
+                let cells = row.getElementsByTagName("td");
+                let textContent = Array.from(cells).map(cell => cell.textContent.toUpperCase());
+                row.style.display = textContent.some(text => text.includes(filter)) ? "" : "none";
+            }
+        }
+    }
+});
+</script>
+
+
 
     <ul class="layui-nav">
         <li class="layui-nav-item"><a href="/">Home</a></li>
