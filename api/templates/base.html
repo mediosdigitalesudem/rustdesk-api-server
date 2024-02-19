@@ -46,6 +46,19 @@ document.addEventListener('DOMContentLoaded', (event) => {
 });
 </script>
 
+<script>
+function copyToClipboard(element) {
+  const text = element.getAttribute('data-content');
+  navigator.clipboard.writeText(text).then(() => {
+    // Display success message or feedback
+    console.log("Copied: " + text);
+  }).catch(err => {
+    // Handle errors
+    console.error('Failed to copy text: ', err);
+  });
+}
+
+</script>
 
 
     <ul class="layui-nav">
