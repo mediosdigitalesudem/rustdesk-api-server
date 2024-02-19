@@ -22,7 +22,7 @@ import sys
 EFFECTIVE_SECONDS = 7200
 
 def getStrSha256(s):
-    input_bytes = input_str.encode('utf-8')
+    input_bytes = s.encode('utf-8')
     sha256_hash = hashlib.sha256(input_bytes)
     return sha256_hash.hexdigest()
 
