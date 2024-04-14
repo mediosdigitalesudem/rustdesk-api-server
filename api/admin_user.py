@@ -89,6 +89,8 @@ admin.site.register(models.RustDeskTag, models.RustDeskTagAdmin)
 admin.site.register(models.RustDeskPeer, models.RustDeskPeerAdmin)
 admin.site.register(models.RustDesDevice, models.RustDesDeviceAdmin)
 admin.site.register(models.ShareLink, models.ShareLinkAdmin)
+admin.site.register(models.ConnLog, models.ConnLogAdmin)
+admin.site.register(models.FileLog, models.FileLogAdmin)
 admin.site.unregister(Group)
 admin.site.site_header = 'RustDesk Self-Built Web'
 admin.site.site_title = 'Undefined'
