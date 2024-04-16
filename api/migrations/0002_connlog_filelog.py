@@ -17,6 +17,7 @@ class Migration(migrations.Migration):
                 ('action', models.CharField(max_length=20, null=True, verbose_name='Action')),
                 ('conn_id', models.CharField(max_length=10, null=True, verbose_name='Connection ID')),
                 ('from_ip', models.CharField(max_length=30, null=True, verbose_name='From IP')),
+                ('from_id', models.CharField(max_length=20, null=True, verbose_name='From ID')),
                 ('rid', models.CharField(max_length=20, null=True, verbose_name='To ID')),
                 ('conn_start', models.DateTimeField(null=True, verbose_name='Connected')),
                 ('conn_end', models.DateTimeField(null=True, verbose_name='Disconnected')),

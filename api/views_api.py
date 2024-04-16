@@ -252,6 +252,7 @@ def audit(request):
             action=postdata['action'] if 'action' in postdata else '',
             conn_id=postdata['conn_id'] if 'conn_id' in postdata else 0,
             from_ip=postdata['ip'] if 'ip' in postdata else '',
+            from_id='',
             rid=postdata['id'] if 'id' in postdata else '',
             conn_start=datetime.datetime.now(),
             session_id=postdata['session_id'] if 'session_id' in postdata else 0,
@@ -274,6 +275,13 @@ def audit(request):
             logged_at=datetime.datetime.now(),
         )
         new_file_log.save()
+    else:
+        try:
+            peer = postdata['peer']
+            ConnLog.objects.filter(Q(conn_id=postdata['conn_id'])).update(session_id=postdata['session_id'])
+            ConnLog.objects.filter(Q(conn_id=postdata['conn_id'])).update(from_id=peer[0])
+        except:
+            print(postdata)
 
     result = {
     'code':1,

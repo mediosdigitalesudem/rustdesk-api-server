@@ -324,6 +324,11 @@ def get_conn_log():
             logs[k]['alias'] = peer.alias
         except:
             logs[k]['alias'] = 'UNKNOWN'
+        try:
+            peer = RustDeskPeer.objects.get(rid=v['from_id'])
+            logs[k]['from_alias'] = peer.alias
+        except:
+            logs[k]['from_alias'] = 'UNKNOWN'
         #from_zone = tz.tzutc()
         #to_zone = tz.tzlocal()
         #utc = logs[k]['logged_at']

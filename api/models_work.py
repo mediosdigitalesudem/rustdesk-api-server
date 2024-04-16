@@ -93,6 +93,7 @@ class ConnLog(models.Model):
     action = models.CharField(verbose_name='Action', max_length=20, null=True)
     conn_id = models.CharField(verbose_name='Connection ID', max_length=10, null=True)
     from_ip = models.CharField(verbose_name='From IP', max_length=30, null=True)
+    from_id = models.CharField(verbose_name='From ID', max_length=20, null=True)
     rid = models.CharField(verbose_name='To ID', max_length=20, null=True)
     conn_start = models.DateTimeField(verbose_name='Connected', null=True)
     conn_end = models.DateTimeField(verbose_name='Disconnected', null=True)
@@ -100,9 +101,9 @@ class ConnLog(models.Model):
     uuid = models.CharField(verbose_name='uuid', max_length=60, null=True)
 
 class ConnLogAdmin(admin.ModelAdmin):
-    list_display = ('id', 'action', 'conn_id', 'from_ip', 'rid', 'conn_start', 'conn_end', 'session_id', 'uuid')
+    list_display = ('id', 'action', 'conn_id', 'from_ip', 'from_id', 'rid', 'conn_start', 'conn_end', 'session_id', 'uuid')
     search_fields = ('from_ip', 'rid')
-    list_filter = ('id', 'from_ip', 'rid', 'conn_start', 'conn_end')
+    list_filter = ('id', 'from_ip', 'from_id', 'rid', 'conn_start', 'conn_end')
 
 class FileLog(models.Model):
     id = models.IntegerField(verbose_name='ID',primary_key=True)

@@ -11,9 +11,11 @@
           <table class="layui-table sortable">
             <thead>
               <tr>
-                <th>From IP</th>
-                <th>To ID</th>
-                <th>Alias</th>
+                <th>User IP</th>
+                <th>User ID</th>
+                <th>User Alias</th>
+                <th>Remote ID</th>
+                <th>Remote Alias</th>
                 <th>Connection Start Time</th>
                 <th>Connection End Time</th>
                 <th>Duration (HH:MM:SS)</th>
@@ -23,6 +25,8 @@
               {% for one in page_obj %}
               <tr>
                 <td>{{one.from_ip}} </td>
+                <td>{{one.from_id}}</td>
+                <td>{{one.from_alias}}</td>
                 <td>{{one.rid}}</td>  
                 <td>{{one.alias}}</td> 
                 <td>{{one.conn_start}}</td>
