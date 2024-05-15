@@ -18,7 +18,7 @@ REM ############################### Please Do Not Edit Below This Line #########
 if not exist C:\Temp\ md C:\Temp\
 cd C:\Temp\
 
-curl -L "https://github.com/rustdesk/rustdesk/releases/download/1.2.2/rustdesk-1.2.2-x86_64.exe" -o rustdesk.exe
+curl -L "https://github.com/rustdesk/rustdesk/releases/download/1.2.3-2/rustdesk-1.2.3-2-x86_64.exe" -o rustdesk.exe
 
 rustdesk.exe --silent-install
 timeout /t 20
