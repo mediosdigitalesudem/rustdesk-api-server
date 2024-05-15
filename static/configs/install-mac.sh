@@ -15,7 +15,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # Specify the path to the rustdesk.dmg file
-dmg_file="/tmp/rustdesk-1.2.2-x86_64.dmg"
+dmg_file="/tmp/rustdesk-1.2.3-2-x86_64.dmg"
 
 # Specify the mount point for the DMG (temporary directory)
 mount_point="/Volumes/RustDesk"
@@ -24,9 +24,9 @@ mount_point="/Volumes/RustDesk"
 echo "Downloading RustDesk Now"
 
 if [[ $(arch) == 'arm64' ]]; then
-curl -L https://github.com/rustdesk/rustdesk/releases/download/1.2.2/rustdesk-1.2.2-aarch64.dmg --output "$dmg_file"
+curl -L https://github.com/rustdesk/rustdesk/releases/download/1.2.2/rustdesk-1.2.3-2-aarch64.dmg --output "$dmg_file"
 else
-curl -L https://github.com/rustdesk/rustdesk/releases/download/1.2.2/rustdesk-1.2.2-x86_64.dmg --output "$dmg_file"
+curl -L https://github.com/rustdesk/rustdesk/releases/download/1.2.2/rustdesk-1.2.3-2-x86_64.dmg --output "$dmg_file"
 fi
 
 # Mount the DMG file to the specified mount point
