@@ -69,6 +69,8 @@ function copyToClipboard(element) {
         {% if u.is_admin %}
         <li class="layui-nav-item"><a href="/admin" target="_blank">Admin Panel</a>
         </li>
+        <li class="layui-nav-item"><a href="/api/conn_log">Connection Log</a></li>
+        <li class="layui-nav-item"><a href="/api/file_log">File Transfer Log</a></li>
         {% endif %}
         <li class="layui-nav-item"><a href="/api/user_action?action=logout" target="_blank">Logout</a></li>
     </ul>
