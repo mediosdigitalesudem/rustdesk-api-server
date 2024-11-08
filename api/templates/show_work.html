@@ -2,17 +2,20 @@
 {% block title %}RustDesk WebUI{% endblock %}
 {% block legend_name %}All Devices{% endblock %}
 {% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <div style="padding: 20px; background-color: #F2F2F2;">
   <div class="layui-row layui-col-space15">
   <input type="text" id="globalSearchInput" onkeyup="globalSearch()" placeholder="Search all fields..." style="width: 200px; height: 20px; margin-bottom: 10px;">
     <div class="layui-col-md15">
       <div class="layui-card">
-        <div class="layui-card-header">Device Statistics - [Username: {{u.username}}]</div>
+        <div class="layui-card-header">Device Statistics - [Username: {{u.username}}] <a href="/api/add_peer"><i class='fa fa-plus'></i> Add Peer</a></div>
         <div class="layui-card-body">
           <table class="layui-table">
             <thead>
               <tr>
+                <th>Edit / Delete</th>
                 <th>Client ID</th>
+                <th>Status</th>
                 <th>Version</th>
                 <th>Connection Password</th>
                 <th>System Username</th>
@@ -24,12 +27,15 @@
                 <th>Memory</th>
                 <th>Registration Time</th>
                 <th>Last Update Time</th>
+                <th>IP Address</th>
               </tr>
             </thead>
             <tbody>
               {% for one in single_info %}
               <tr>
+                <td><a href="/api/edit_peer?rid={{one.rid}}"><i class='fa fa-edit'></i></a> / <a href="/api/delete_peer?rid={{one.rid}}"><i class='fa fa-trash'></i></a></td>
                 <td><a href="rustdesk://{{one.rid}}">{{one.rid}}</a> </td>
+                <td>{{one.status}} </td>
                 <td>{{one.version}}</td>
                 <td>{{one.has_rhash}}</td>
                 <td>{{one.username}}</td>
@@ -41,6 +47,7 @@
                 <td>{{one.memory}}</td>
                 <td>{{one.create_time}}</td>
                 <td>{{one.update_time}}</td>
+                <td>{{one.ip}}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -67,13 +74,19 @@
                 <th>Memory</th>
                 <th>Registration Time</th>
                 <th>Last Update Time</th>
+                <th>Status</th>
+                <th>IP Address</th>
               </tr>
             </thead>
             <tbody>
               {% for one in all_info %}
               <tr>
                 <td><a href="rustdesk://{{one.rid}}">{{one.rid}}</a> </td>
+                {% if one.rust_user|length > 0 %}
                 <td>{{one.rust_user}} </td>
+                {% else %}
+                <td><a href="/api/add_peer?rid={{one.rid}}"><i class='fa fa-plus'></i> Claim Peer</a></td>
+                {% endif %}
                 <td>{{one.version}} </td>
                 <td>{{one.username}} </td>
                 <td>{{one.hostname}} </td>
@@ -82,6 +95,8 @@
                 <td>{{one.memory}} </td>
                 <td>{{one.create_time}} </td>
                 <td>{{one.update_time}} </td>
+                <td>{{one.status}} </td>
+                <td>{{one.ip}}</td>
               </tr>
               {% endfor %}
             </tbody>
