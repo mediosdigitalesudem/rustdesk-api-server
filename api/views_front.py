@@ -19,6 +19,7 @@ import json
 import time
 import hashlib
 import sys
+from .forms import AddPeerForm, EditPeerForm, AssignPeerForm
 
 EFFECTIVE_SECONDS = 7200
 
@@ -176,12 +177,14 @@ def user_logout(request):
         
 def get_single_info(uid):
     # Fetches single user information
+    online_count = 0
     peers = RustDeskPeer.objects.filter(Q(uid=uid))
     rids = [x.rid for x in peers]
     peers = {x.rid:model_to_dict(x) for x in peers}
     devices = RustDesDevice.objects.filter(rid__in=rids)
     devices = {x.rid:x for x in devices}
 
+    now = datetime.datetime.now()
     for rid, device in devices.items():
         peers[rid]['create_time'] = device.create_time.strftime('%Y-%m-%d')
         peers[rid]['update_time'] = device.update_time.strftime('%Y-%m-%d')
@@ -189,35 +192,68 @@ def get_single_info(uid):
         peers[rid]['memory'] = device.memory
         peers[rid]['cpu'] = device.cpu
         peers[rid]['os'] = device.os
+        peers[rid]['ip'] = device.ip
+        if (now-device.update_time).seconds <=120:
+            peers[rid]['status'] = 'Online'
+            online_count += 1
+        else:
+            peers[rid]['status'] = 'X'
 
     for rid in peers.keys():
         peers[rid]['has_rhash'] = 'Yes' if len(peers[rid]['rhash'])>1 else 'No'
+        peers[rid]['status'] = 'X'
 
-    return [v for k,v in peers.items()]
+    sorted_peers = sorted(peers.items(), key=custom_sort, reverse=True)
+    new_ordered_dict = {}
+    for key, peer in sorted_peers:
+        new_ordered_dict[key] = peer
+
+    return ([v for k,v in new_ordered_dict.items()], online_count)
 
 def get_all_info():
     # Fetches all device and peer information
+    online_count = 0
     devices = RustDesDevice.objects.all()
     peers = RustDeskPeer.objects.all()
     devices = {x.rid:model_to_dict2(x) for x in devices}
+    now = datetime.datetime.now()
     for peer in peers:
         user = UserProfile.objects.filter(Q(id=peer.uid)).first()
         device = devices.get(peer.rid, None)
         if device:
             devices[peer.rid]['rust_user'] = user.username
-    return [v for k,v in devices.items()]
+
+    for k, v in devices.items():
+        if (now-datetime.datetime.strptime(v['update_time'], '%Y-%m-%d')).seconds <=120:
+            devices[k]['status'] = 'Online'
+            online_count += 1
+        else: 
+           devices[k]['status'] = 'X'
+
+    sorted_devices = sorted(devices.items(), key=custom_sort, reverse=True)
+    new_ordered_dict = {}
+    for key, device in sorted_devices:
+        new_ordered_dict[key] = device
+    return ([v for k,v in new_ordered_dict.items()], online_count)
+
+def custom_sort(item):
+    status = item[1]['status']
+    if status == 'Online':
+        return 1
+    else:
+        return 0
 
 @login_required(login_url='/api/user_action?action=login')
 def work(request):
     # Main work view
     username = request.user
     u = UserProfile.objects.get(username=username)
-    single_info = get_single_info(u.id)
+    single_info, online_count_single = get_single_info(u.id)
 
-    all_info = get_all_info()
+    all_info, online_count_all = get_all_info()
     print(all_info)
 
-    return render(request, 'show_work.html', {'single_info':single_info, 'all_info':all_info, 'u':u})
+    return render(request, 'show_work.html', {'single_info':single_info, 'all_info':all_info, 'u':u, 'online_count_single':online_count_single, 'online_count_all':online_count_all})
 
 def check_sharelink_expired(sharelink):
     # Checks if a share link is expired
@@ -386,3 +422,114 @@ def file_log(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'show_file_log.html', {'page_obj':page_obj})
+
+@login_required(login_url='/api/user_action?action=login')
+def add_peer(request):
+    if request.method == 'POST':
+        form = AddPeerForm(request.POST)
+        if form.is_valid():
+            rid = form.cleaned_data['clientID']
+            uid = request.user.id
+            username = form.cleaned_data['username']
+            hostname = form.cleaned_data['hostname']
+            plat = form.cleaned_data['platform']
+            alias = form.cleaned_data['alias']
+            tags = form.cleaned_data['tags']
+            ip = form.cleaned_data['ip']
+
+            peer = RustDeskPeer(
+                uid = uid,
+                rid = rid,
+                username = username,
+                hostname = hostname,
+                platform = plat,
+                alias = alias,
+                tags = tags,
+                ip = ip
+            )
+            peer.save()
+            return HttpResponseRedirect('/api/work')
+    else:
+        rid = request.GET.get('rid','')
+        form = AddPeerForm()
+    return render(request, 'add_peer.html', {'form': form, 'rid': rid})
+
+@login_required(login_url='/api/user_action?action=login')
+def edit_peer(request):
+    if request.method == 'POST':
+        form = EditPeerForm(request.POST)
+        if form.is_valid():
+            rid = form.cleaned_data['clientID']
+            uid = request.user.id
+            username = form.cleaned_data['username']
+            hostname = form.cleaned_data['hostname']
+            plat = form.cleaned_data['platform']
+            alias = form.cleaned_data['alias']
+            tags = form.cleaned_data['tags']
+
+            updated_peer = RustDeskPeer.objects.get(rid=rid,uid=uid)
+            updated_peer.username=username
+            updated_peer.hostname=hostname
+            updated_peer.platform=plat
+            updated_peer.alias=alias
+            updated_peer.tags=tags
+            updated_peer.save()
+
+            return HttpResponseRedirect('/api/work')
+        else:
+            print(form.errors)
+    else:
+        rid = request.GET.get('rid','')
+        peer = RustDeskPeer.objects.get(rid=rid)
+        initial_data = {
+            'clientID': rid,
+            'alias': peer.alias,
+            'tags': peer.tags,
+            'username': peer.username,
+            'hostname': peer.hostname,
+            'platform': peer.platform,
+            'ip': peer.ip
+        }
+        form = EditPeerForm(initial=initial_data)
+        return render(request, 'edit_peer.html', {'form': form, 'peer': peer})
+    
+@login_required(login_url='/api/user_action?action=login')
+def assign_peer(request):
+    if request.method == 'POST':
+        form = AssignPeerForm(request.POST)
+        if form.is_valid():
+            rid = form.cleaned_data['clientID']
+            uid = form.cleaned_data['uid']
+            username = form.cleaned_data['username']
+            hostname = form.cleaned_data['hostname']
+            plat = form.cleaned_data['platform']
+            alias = form.cleaned_data['alias']
+            tags = form.cleaned_data['tags']
+            ip = form.cleaned_data['ip']
+
+            peer = RustDeskPeer(
+                uid = uid.id,
+                rid = rid,
+                username = username,
+                hostname = hostname,
+                platform = plat,
+                alias = alias,
+                tags = tags,
+                ip = ip
+            )
+            peer.save()
+            return HttpResponseRedirect('/api/work')
+        else:
+            print(form.errors)
+    else:
+        rid = request.GET.get('rid')
+        form = AssignPeerForm()
+        #get list of users from the database
+        return render(request, 'assign_peer.html', {'form':form, 'rid': rid})
+    
+@login_required(login_url='/api/user_action?action=login')
+def delete_peer(request):
+    rid = request.GET.get('rid')
+    peer = RustDeskPeer.objects.filter(Q(uid=request.user.id) & Q(rid=rid))
+    peer.delete()
+    return HttpResponseRedirect('/api/work')

@@ -206,6 +206,7 @@ def sysinfo(request):
         result['error'] = 'Incorrect submission method!'
         return JsonResponse(result)
     
+    client_ip = get_client_ip(request)
     postdata = json.loads(request.body)
     device = RustDesDevice.objects.filter(Q(rid=postdata['id']) & Q(uuid=postdata['uuid'])).first()
     if not device:
@@ -218,12 +219,14 @@ def sysinfo(request):
             username=postdata.get('username', '-'),
             uuid=postdata['uuid'],
             version=postdata['version'],
+            ip=client_ip,
         )
         device.save()
     else:
         postdata2 = copy.copy(postdata)
         postdata2['rid'] = postdata2['id']
         postdata2.pop('id')
+        postdata2['ip'] = client_ip
         RustDesDevice.objects.filter(Q(rid=postdata['id']) & Q(uuid=postdata['uuid'])).update(**postdata2)
     result['data'] = 'ok'
     return JsonResponse(result)
@@ -285,6 +288,14 @@ def audit(request):
     'data':'ok'
     }
     return JsonResponse(result)
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 def convert_filesize(size_bytes):
     if size_bytes == 0:
