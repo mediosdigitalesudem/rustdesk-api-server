@@ -85,7 +85,7 @@
                 {% if one.rust_user|length > 0 %}
                 <td>{{one.rust_user}} </td>
                 {% else %}
-                <td><a href="/api/add_peer?rid={{one.rid}}"><i class='fa fa-plus'></i> Claim Peer</a></td>
+                <td><a href="/api/assign_peer?rid={{one.rid}}"><i class='fa fa-plus'></i> Assign Peer</a></td>
                 {% endif %}
                 <td>{{one.version}} </td>
                 <td>{{one.username}} </td>

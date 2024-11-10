@@ -26,4 +26,5 @@ urlpatterns = [
     url(r'^add_peer',views.add_peer),
     url(r'^delete_peer',views.delete_peer),
     url(r'^edit_peer',views.edit_peer),
+    url(r'^assign_peer',views.assign_peer),
     ]

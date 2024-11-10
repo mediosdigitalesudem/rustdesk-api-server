@@ -6,9 +6,10 @@
     <div class="layui-row layui-col-space15">
       <div class="layui-col-md15">
         <div class="layui-card">
-          <div class="layui-card-header">{{ "Add Client" }}</div>
+          <div class="layui-card-header">{{ "Assign Client to User" }}</div>
           <div class="layui-card-body">
-            <form action="/api/add_peer" method="post" enctype="multipart/form-data">
+            <form action="/api/assign_peer" method="post" enctype="multipart/form-data">
+                {{ form.uid }}<br><br>
                 <label for="{{ form.clientID.id_for_label }}">Rustdesk client ID:</label>
                 {{ form.clientID }}<br><br>
                 <label for="{{ form.alias.id_for_label }}">Alias:</label>
