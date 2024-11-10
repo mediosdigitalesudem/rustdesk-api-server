@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}RustDesk{% endblock %}
-{% block legend_name %}Edit Peer{% endblock %}
+{% block legend_name %}Edit Client{% endblock %}
 {% block content %}
 <div style="padding: 20px; background-color: #F2F2F2;">
     <div class="layui-row layui-col-space15">
@@ -21,7 +21,7 @@
                 {{ form.hostname }}<br><br>
                 <label for="{{ form.platform.id_for_label }}">Platform:</label>
                 {{ form.platform }}<br><br>
-                <button type="submit">Save Peer</button>
+                <button type="submit">Save Client</button>
             </form>
           </div>
         </div>
