@@ -1,4 +1,6 @@
 @echo off
+# RustDesk version (manually set by now)
+set version="1.3.9"
 
 REM Assign the value random password to the password variable
 setlocal ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
@@ -18,7 +20,7 @@ REM ############################### Please Do Not Edit Below This Line #########
 if not exist C:\Temp\ md C:\Temp\
 cd C:\Temp\
 
-curl -L "https://github.com/rustdesk/rustdesk/releases/download/1.3.7/rustdesk-1.3.7-x86_64.exe" -o rustdesk.exe
+curl -L "https://github.com/rustdesk/rustdesk/releases/download/%version%/rustdesk-%version%-x86_64.exe" -o rustdesk.exe
 
 rustdesk.exe --silent-install
 timeout /t 20
