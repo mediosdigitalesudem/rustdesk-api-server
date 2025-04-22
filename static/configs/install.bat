@@ -1,5 +1,5 @@
 @echo off
-# RustDesk version (manually set by now)
+REM RustDesk version (manually set by now)
 set version="1.3.9"
 
 REM Assign the value random password to the password variable
