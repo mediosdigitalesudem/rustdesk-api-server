@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# RustDesk version (manually set by now)
+VERSION="1.3.9"
+
 # Assign a random value to the password variable
 rustdesk_pw=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
 
@@ -63,9 +66,6 @@ if [ ! "${ARCH}" = "x86_64" ] && [ ! "${ARCH}" = "aarch64" ]; then
     echo "Unknown processor architecture"
     exit 1
 fi
-
-# RustDesk version (manually set by now)
-VERSION="1.3.8"
 
 # Install RustDesk
 
