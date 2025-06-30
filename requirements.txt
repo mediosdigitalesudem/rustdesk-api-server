@@ -1,2 +1,5 @@
 django
 gunicorn
+pyotp
+qrcode
+Pillow
