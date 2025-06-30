@@ -42,10 +42,18 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(verbose_name='Active', default=True)
     is_admin = models.BooleanField(verbose_name='Admin', default=False)
 
+    # 2FA fields
+    otp_secret_key = models.CharField(max_length=255, blank=True, null=True) # Stores the secret key for OTP generation
+    is_2fa_enabled = models.BooleanField(default=False) # Flag to check if 2FA is enabled for the user
+    otp_recovery_codes = models.TextField(blank=True, null=True) # Stores hashed recovery codes, comma-separated
+
     objects = MyUserManager()
  
     USERNAME_FIELD = 'username'  # Field used as username
-    REQUIRED_FIELDS = ['password']  # Fields that must be filled in
+    # REQUIRED_FIELDS should not include 'password' if it's handled by AbstractBaseUser's password management.
+    # It's for fields prompted for when creating a user via createsuperuser.
+    # Let's assume 'password' is implicitly required by the manager.
+    REQUIRED_FIELDS = []  # Fields that must be filled in, password handled by manager
     
     
     def get_full_name(self):
