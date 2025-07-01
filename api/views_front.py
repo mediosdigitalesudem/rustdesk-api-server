@@ -722,11 +722,23 @@ def verify_otp_login(request):
             del request.session['2fa_user_id_to_verify']
         return HttpResponseRedirect(settings.LOGIN_REDIRECT_URL if hasattr(settings, 'LOGIN_REDIRECT_URL') else '/api/work')
 
+    # Pre-check for missing otp_secret_key if 2FA is enabled
+    if not user.otp_secret_key:
+        # This is an invalid state: 2FA is enabled, but no secret key is stored.
+        # Log this issue for admin, and inform the user.
+        # Consider using proper logging framework in a real application
+        print(f"CRITICAL: User {user.username} (ID: {user.id}) has 2FA enabled but no otp_secret_key.")
+        return render(request, 'msg.html', {
+            'title': '2FA Configuration Error',
+            'msg': 'Your Two-Factor Authentication setup is incomplete or corrupted. Please try disabling and re-enabling 2FA from your profile, or contact support if the issue persists.'
+        })
+
     if request.method == 'POST':
         otp_code = request.POST.get('otp_code', '').strip()
         if not otp_code:
             return render(request, 'verify_otp_login.html', {'error': 'OTP code is required.'})
 
+        # Now it's safer to call pyotp.TOTP() because we've checked user.otp_secret_key
         totp = pyotp.TOTP(user.otp_secret_key)
         if totp.verify(otp_code):
             # Standard OTP is valid
