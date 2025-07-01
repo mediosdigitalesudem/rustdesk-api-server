@@ -47,10 +47,13 @@
                 type:'post',
 
                 success: function(resp) {
-		    			if(resp.code==1) {
+					if(resp.code==1) { // Login successful, no 2FA
 		    				//layer.alert(resp.msg,{icon:1});
-                            location.href = resp.url;
-		    			} else {
+                            location.href = resp.url; // Redirect to main page
+					} else if (resp.code==2) { // 2FA required
+                            // layer.alert(resp.msg, {icon:4}); // Optional: inform user
+                            location.href = resp.url_2fa; // Redirect to OTP verification page
+                        } else { // Login failed (wrong credentials, other errors)
 		    				layer.alert(resp.msg,{icon:5});
 		    			}
                 }

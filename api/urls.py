@@ -27,4 +27,6 @@ urlpatterns = [
     url(r'^delete_peer',views.delete_peer),
     url(r'^edit_peer',views.edit_peer),
     url(r'^assign_peer',views.assign_peer),
+    # 2FA URLs
+    url(r'^setup_2fa', views.setup_2fa, name='setup_2fa'), # Handles GET for showing QR/form and POST for OTP confirmation
     ]

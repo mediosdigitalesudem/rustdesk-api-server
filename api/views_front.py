@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.contrib import auth
+from django.urls import reverse # Added for 2FA redirection
 from api.models import RustDeskPeer, RustDesDevice, UserProfile, ShareLink, ConnLog, FileLog
 from django.forms.models import model_to_dict
 from django.core.paginator import Paginator
@@ -21,7 +22,17 @@ import hashlib
 import sys
 from .forms import AddPeerForm, EditPeerForm, AssignPeerForm
 
+import pyotp
+import qrcode
+import io
+import base64
+import hashlib # For hashing recovery codes
+import os # For generating random bytes for recovery codes
+
 EFFECTIVE_SECONDS = 7200
+OTP_ISSUER_NAME = "RustDeskPro" # You can change this to your app's name
+NUMBER_OF_RECOVERY_CODES = 10
+RECOVERY_CODE_LENGTH = 10 # Length of each recovery code (e.g. 5_bytes * 2_chars_per_byte = 10_chars)
 
 def getStrSha256(s):
     input_bytes = s.encode('utf-8')
@@ -123,8 +134,20 @@ def user_login(request):
 
     user = auth.authenticate(username=username,password=password)
     if user:
-        auth.login(request, user)
-        return JsonResponse({'code':1, 'url':'/api/work'})
+        if user.is_2fa_enabled:
+            # Store user_id in session to indicate 2FA is pending for this user
+            request.session['2fa_user_id_to_verify'] = user.id
+            # Return a new response code indicating 2FA is required
+            try:
+                verify_url = reverse('verify_otp_login')
+            except Exception as e: # Fallback if reverse fails for some reason during setup
+                print(f"Error reversing URL 'verify_otp_login': {e}")
+                verify_url = '/api/verify_otp_login' # Hardcoded fallback
+            return JsonResponse({'code': 2, 'msg': 'Please enter your OTP code.', 'url_2fa': verify_url})
+        else:
+            # 2FA not enabled, log in directly
+            auth.login(request, user)
+            return JsonResponse({'code':1, 'url': settings.LOGIN_REDIRECT_URL if hasattr(settings, 'LOGIN_REDIRECT_URL') else '/api/work'})
     else:
         return JsonResponse({'code':0, 'msg':'Account or password incorrect!'})
 
@@ -533,3 +556,196 @@ def delete_peer(request):
     peer = RustDeskPeer.objects.filter(Q(uid=request.user.id) & Q(rid=rid))
     peer.delete()
     return HttpResponseRedirect('/api/work')
+
+# --- 2FA Views ---
+
+def _generate_recovery_codes():
+    """Generates a list of unique, random recovery codes."""
+    codes = []
+    for _ in range(NUMBER_OF_RECOVERY_CODES):
+        codes.append(os.urandom(RECOVERY_CODE_LENGTH // 2).hex()) # Each byte becomes 2 hex chars
+    return codes
+
+def _hash_recovery_code(code):
+    """Hashes a single recovery code."""
+    return hashlib.sha256(code.encode()).hexdigest()
+
+def _store_recovery_codes(user, plain_codes):
+    """Hashes and stores recovery codes for the user."""
+    hashed_codes = [_hash_recovery_code(code) for code in plain_codes]
+    user.otp_recovery_codes = json.dumps(hashed_codes) # Store as a JSON array of strings
+    # user.save() should be called after this by the calling function
+
+@login_required(login_url='/api/user_action?action=login')
+def setup_2fa(request):
+    user = request.user
+    if user.is_2fa_enabled:
+        # Optionally, redirect to a page informing that 2FA is already enabled
+        # or to a management page for 2FA.
+        # For now, just redirect to work or show a message.
+        # return HttpResponseRedirect('/api/work')
+        # For simplicity, let's render a message, or ideally, redirect to a 2FA management page
+        return render(request, 'msg.html', {'title': '2FA Error', 'msg': 'Two-Factor Authentication is already enabled for your account.'})
+
+    if request.method == 'GET':
+        # Generate a new secret key for the user
+        otp_secret_key = pyotp.random_base32()
+        request.session['otp_secret_key_setup'] = otp_secret_key # Store in session temporarily
+
+        totp = pyotp.TOTP(otp_secret_key)
+        provisioning_uri = totp.provisioning_uri(name=user.username, issuer_name=OTP_ISSUER_NAME)
+
+        # Generate QR code
+        img = qrcode.make(provisioning_uri)
+        buffered = io.BytesIO()
+        img.save(buffered, format="PNG")
+        qr_code_base64 = base64.b64encode(buffered.getvalue()).decode()
+
+        return render(request, 'setup_2fa.html', {
+            'qr_code_base64': qr_code_base64,
+            'otp_secret_key': otp_secret_key # Display this to the user as an alternative to QR
+        })
+
+    elif request.method == 'POST': # This will be the confirmation step
+        otp_code = request.POST.get('otp_code', '').strip()
+        otp_secret_key_from_session = request.session.get('otp_secret_key_setup')
+
+        if not otp_secret_key_from_session:
+            return render(request, 'msg.html', {'title': 'Error', 'msg': 'Session expired or invalid. Please try setting up 2FA again.'})
+
+        if not otp_code:
+            # Need to regenerate QR for the template if we show an error on the same page
+            totp_temp = pyotp.TOTP(otp_secret_key_from_session)
+            provisioning_uri_temp = totp_temp.provisioning_uri(name=user.username, issuer_name=OTP_ISSUER_NAME)
+            img_temp = qrcode.make(provisioning_uri_temp)
+            buffered_temp = io.BytesIO()
+            img_temp.save(buffered_temp, format="PNG")
+            qr_code_base64_temp = base64.b64encode(buffered_temp.getvalue()).decode()
+            return render(request, 'setup_2fa.html', {
+                'qr_code_base64': qr_code_base64_temp,
+                'otp_secret_key': otp_secret_key_from_session,
+                'error': 'OTP code is required.'
+            })
+
+        totp = pyotp.TOTP(otp_secret_key_from_session)
+        if totp.verify(otp_code):
+            # OTP is valid, finalize 2FA setup
+            user.otp_secret_key = otp_secret_key_from_session
+            user.is_2fa_enabled = True
+
+            plain_recovery_codes = _generate_recovery_codes()
+            _store_recovery_codes(user, plain_recovery_codes)
+
+            user.save()
+
+            # Clear the temporary secret from session
+            if 'otp_secret_key_setup' in request.session:
+                del request.session['otp_secret_key_setup']
+
+            # Display recovery codes to the user (they must save these)
+            # It's better to have a dedicated template for this.
+            # For now, passing them to a generic message template or a new one.
+            return render(request, 'display_recovery_codes.html', {
+                'title': '2FA Enabled Successfully!',
+                'msg': 'Please save these recovery codes in a safe place. Each can be used once if you lose access to your authenticator app.',
+                'recovery_codes': plain_recovery_codes
+            })
+        else:
+            # OTP is invalid, show error
+            # Regenerate QR for the template
+            totp_temp = pyotp.TOTP(otp_secret_key_from_session)
+            provisioning_uri_temp = totp_temp.provisioning_uri(name=user.username, issuer_name=OTP_ISSUER_NAME)
+            img_temp = qrcode.make(provisioning_uri_temp)
+            buffered_temp = io.BytesIO()
+            img_temp.save(buffered_temp, format="PNG")
+            qr_code_base64_temp = base64.b64encode(buffered_temp.getvalue()).decode()
+
+            return render(request, 'setup_2fa.html', {
+                'qr_code_base64': qr_code_base64_temp,
+                'otp_secret_key': otp_secret_key_from_session,
+                'error': 'Invalid OTP code. Please try again.'
+            })
+    else:
+        # Should not happen if routes are set up for GET and POST only
+        return render(request, 'msg.html', {'title': 'Error', 'msg': 'Invalid request method.'})
+
+# Note: I've combined setup and confirm into one view `setup_2fa` that handles GET for setup and POST for confirmation.
+# This is a common pattern. If you prefer separate views like `confirm_2fa` for POST, we can split it.
+# For now, the plan step "Vista confirm_2fa (POST)" is handled by the POST part of the `setup_2fa` view.
+
+
+def _verify_recovery_code(user, code_to_check):
+    """
+    Verifies a recovery code against the stored hashed codes.
+    If valid, removes it from the list of available codes.
+    Returns True if valid and consumed, False otherwise.
+    """
+    if not user.otp_recovery_codes:
+        return False
+
+    hashed_code_to_check = _hash_recovery_code(code_to_check)
+
+    try:
+        stored_hashed_codes = json.loads(user.otp_recovery_codes)
+        if not isinstance(stored_hashed_codes, list):
+            return False # Should be a list
+    except json.JSONDecodeError:
+        return False
+
+    if hashed_code_to_check in stored_hashed_codes:
+        stored_hashed_codes.remove(hashed_code_to_check)
+        user.otp_recovery_codes = json.dumps(stored_hashed_codes)
+        # user.save() will be called by the calling view after successful login
+        return True
+    return False
+
+# No @login_required here, as the user is not fully logged in yet.
+# We rely on a session variable to know which user is trying to log in.
+def verify_otp_login(request):
+    # Get user_id from session, placed there by the initial login view
+    user_id_to_verify = request.session.get('2fa_user_id_to_verify')
+
+    if not user_id_to_verify:
+        # No user_id in session, perhaps session expired or direct access to this URL
+        return render(request, 'msg.html', {'title': 'Login Error', 'msg': 'No pending 2FA verification. Please log in normally.'})
+
+    try:
+        user = UserProfile.objects.get(id=user_id_to_verify)
+    except UserProfile.DoesNotExist:
+        return render(request, 'msg.html', {'title': 'Login Error', 'msg': 'User not found for 2FA verification.'})
+
+    if not user.is_2fa_enabled:
+        # Should not happen if initial login view is correct, but as a safeguard:
+        # Log them in directly if 2FA somehow got disabled between steps.
+        auth.login(request, user)
+        if '2fa_user_id_to_verify' in request.session:
+            del request.session['2fa_user_id_to_verify']
+        return HttpResponseRedirect(settings.LOGIN_REDIRECT_URL if hasattr(settings, 'LOGIN_REDIRECT_URL') else '/api/work')
+
+    if request.method == 'POST':
+        otp_code = request.POST.get('otp_code', '').strip()
+        if not otp_code:
+            return render(request, 'verify_otp_login.html', {'error': 'OTP code is required.'})
+
+        totp = pyotp.TOTP(user.otp_secret_key)
+        if totp.verify(otp_code):
+            # Standard OTP is valid
+            auth.login(request, user) # Complete the login
+            user.save() # To save any changes if a recovery code was used then standard OTP (though unlikely path)
+            if '2fa_user_id_to_verify' in request.session:
+                del request.session['2fa_user_id_to_verify']
+            return HttpResponseRedirect(settings.LOGIN_REDIRECT_URL if hasattr(settings, 'LOGIN_REDIRECT_URL') else '/api/work')
+        elif _verify_recovery_code(user, otp_code):
+            # Recovery code is valid and has been consumed
+            auth.login(request, user) # Complete the login
+            user.save() # Save the user model because recovery codes list has changed
+            if '2fa_user_id_to_verify' in request.session:
+                del request.session['2fa_user_id_to_verify']
+            # Optionally, message user that a recovery code was used
+            return HttpResponseRedirect(settings.LOGIN_REDIRECT_URL if hasattr(settings, 'LOGIN_REDIRECT_URL') else '/api/work')
+        else:
+            # Both standard OTP and recovery code are invalid
+            return render(request, 'verify_otp_login.html', {'error': 'Invalid OTP code or recovery code.'})
+
+    # GET request
+    return render(request, 'verify_otp_login.html')

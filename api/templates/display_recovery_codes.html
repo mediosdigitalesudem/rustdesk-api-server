@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}2FA Enabled - Recovery Codes{% endblock %}
+
+{% block content %}
+<div class="layui-container" style="padding-top: 20px;">
+    <div class="layui-row">
+        <div class="layui-col-md8 layui-col-md-offset2">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <h2>{{ title | default:"Two-Factor Authentication Enabled!" }}</h2>
+                </div>
+                <div class="layui-card-body">
+                    <p class="layui-text">
+                        {{ msg | default:"Two-Factor Authentication has been successfully enabled for your account." }}
+                    </p>
+                    <p class="layui-text" style="color: red; font-weight: bold;">
+                        Please save these recovery codes in a safe and secure place.
+                        Each code can be used once if you lose access to your authenticator device.
+                        If you lose these codes and your device, you may lose access to your account.
+                    </p>
+
+                    <div class="layui-collapse" style="margin-top: 20px;">
+                        <div class="layui-colla-item">
+                            <h3 class="layui-colla-title">Your Recovery Codes:</h3>
+                            <div class="layui-colla-content layui-show">
+                                <ul class="layui-list">
+                                    {% for code in recovery_codes %}
+                                    <li><code>{{ code }}</code></li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <p>You can now proceed to your account or the main page.</p>
+                    <div style="margin-top: 20px;">
+                        <a href="{% url 'work' %}" class="layui-btn">Go to My Workspace</a>
+                        {# Or a link to account profile page if that's more appropriate #}
+                        {# <a href="{% url 'profile' %}" class="layui-btn layui-btn-primary">Go to Profile</a> #}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+layui.use(['element'], function(){
+  var element = layui.element;
+
+});
+</script>
+{% endblock %}

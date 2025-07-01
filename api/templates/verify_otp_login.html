@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Verify OTP Code{% endblock %}
+
+{% block content %}
+<div class="layui-container" style="padding-top: 50px;">
+    <div class="layui-row">
+        <div class="layui-col-md6 layui-col-md-offset3">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <h2>Enter Your OTP Code</h2>
+                </div>
+                <div class="layui-card-body">
+                    <p>Please enter the 6-digit code from your authenticator app to complete your login.</p>
+                    <p>If you don't have access to your authenticator, you can use one of your recovery codes.</p>
+
+                    <form class="layui-form" method="post" action="{% url 'verify_otp_login' %}">
+                        {% csrf_token %}
+                        <div class="layui-form-item" style="margin-top: 20px;">
+                            <label class="layui-form-label" for="otp_code">OTP / Recovery Code</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="otp_code" id="otp_code" required lay-verify="required" autocomplete="off" class="layui-input" placeholder="Enter 6-digit OTP or recovery code">
+                            </div>
+                        </div>
+
+                        {% if error %}
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <p style="color: red;">{{ error }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn" lay-submit lay-filter="verifyOtp">Verify Code and Login</button>
+                            </div>
+                        </div>
+                    </form>
+                     <hr>
+                    <p style="text-align: center;">
+                        <a href="{% url 'login' %}">Cancel and return to login</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+layui.use(['form'], function(){
+  var form = layui.form;
+
+  // Optional: Custom verification rule for OTP/Recovery code length if needed
+  // form.verify({
+  //   otp_recovery_code: function(value){
+  //     if(value.length < 6 || value.length > 10) { // Example: OTP is 6, recovery might be 10
+  //       return 'Code must be between 6 and 10 characters.';
+  //     }
+  //   }
+  // });
+});
+</script>
+{% endblock %}
