@@ -79,13 +79,17 @@ def model_to_dict2(instance, fields=None, exclude=None, replace=None, default=No
         key = f.name
         # Getting the data for the field
         if type(f) == DateTimeField:
-            # If the field type is DateTimeField, handle it in a specific way
             value = getattr(instance, key)
-            value = datetime.datetime.strftime(value, '%Y-%m-%d')
+            if value is not None:
+                value = datetime.datetime.strftime(value, '%Y-%m-%d')
+            else:
+                value = None # Or consider '' or a specific placeholder string like 'N/A'
         elif type(f) == DateField:
-            # If the field type is DateField, handle it in a specific way
             value = getattr(instance, key)
-            value = datetime.datetime.strftime(value, '%Y-%m-%d')
+            if value is not None:
+                value = datetime.datetime.strftime(value, '%Y-%m-%d')
+            else:
+                value = None # Or consider '' or a specific placeholder string
         elif type(f) == CharField or type(f) == TextField:
             # Check if string data can be serialized into Python structures
             value = getattr(instance, key)
@@ -209,22 +213,43 @@ def get_single_info(uid):
 
     now = datetime.datetime.now()
     for rid, device in devices.items():
-        peers[rid]['create_time'] = device.create_time.strftime('%Y-%m-%d')
-        peers[rid]['update_time'] = device.update_time.strftime('%Y-%m-%d')
+        if device.create_time:
+            peers[rid]['create_time'] = device.create_time.strftime('%Y-%m-%d')
+        else:
+            peers[rid]['create_time'] = 'N/A'
+
+        if device.update_time:
+            peers[rid]['update_time'] = device.update_time.strftime('%Y-%m-%d')
+            if (now - device.update_time).total_seconds() <= 120: # Use total_seconds()
+                peers[rid]['status'] = 'Online'
+                online_count += 1
+            else:
+                peers[rid]['status'] = 'X'
+        else:
+            peers[rid]['update_time'] = 'N/A'
+            peers[rid]['status'] = 'Unknown' # Or 'X' if preferred for consistency
+
         peers[rid]['version'] = device.version
         peers[rid]['memory'] = device.memory
         peers[rid]['cpu'] = device.cpu
         peers[rid]['os'] = device.os
         peers[rid]['ip'] = device.ip
-        if (now-device.update_time).seconds <=120:
-            peers[rid]['status'] = 'Online'
-            online_count += 1
-        else:
-            peers[rid]['status'] = 'X'
+        # The status set above might be overridden by the loop below, which is a logic bug.
+        # For now, focusing on preventing NoneType errors.
 
-    for rid in peers.keys():
-        peers[rid]['has_rhash'] = 'Yes' if len(peers[rid]['rhash'])>1 else 'No'
-        peers[rid]['status'] = 'X'
+    # This loop overrides the status determined above. This is a pre-existing logic issue.
+    # Addressing it is outside the scope of fixing the NoneType error, but worth noting.
+    for rid_key in list(peers.keys()): # Use list(peers.keys()) if peers dict might change, though not here.
+        if rid_key in peers: # Check if key still exists if modifications were possible
+            peers[rid_key]['has_rhash'] = 'Yes' if len(peers[rid_key].get('rhash', '')) > 1 else 'No'
+            # To preserve the status from above, this line should be conditional or removed if status is final.
+            # For now, let's assume the last assignment of 'status' is intentional for this part of logic,
+            # or it's a bug to be fixed separately. The None error is the priority.
+            if 'status' not in peers[rid_key]: # Only set if not already set by time check
+                 peers[rid_key]['status'] = 'X' # Default if no time-based status was set.
+        else:
+            # This case should ideally not happen if peers keys are stable during iteration.
+            print(f"Warning: Peer with rid {rid_key} processed in first loop but not found in second loop of get_single_info.")
 
     sorted_peers = sorted(peers.items(), key=custom_sort, reverse=True)
     new_ordered_dict = {}
@@ -242,16 +267,35 @@ def get_all_info():
     now = datetime.datetime.now()
     for peer in peers:
         user = UserProfile.objects.filter(Q(id=peer.uid)).first()
-        device = devices.get(peer.rid, None)
-        if device:
-            devices[peer.rid]['rust_user'] = user.username
+        device_dict = devices.get(peer.rid, None) # Renamed to avoid confusion with device model instance
+        if device_dict: # Check if peer.rid was found in devices map
+            if user:
+                device_dict['rust_user'] = user.username
+            else:
+                device_dict['rust_user'] = 'Orphaned Peer' # Handle case where peer's user doesn't exist
 
-    for k, v in devices.items():
-        if (now-datetime.datetime.strptime(v['update_time'], '%Y-%m-%d')).seconds <=120:
-            devices[k]['status'] = 'Online'
-            online_count += 1
-        else: 
-           devices[k]['status'] = 'X'
+    for k, v_dict in devices.items(): # Renamed v to v_dict for clarity (it's a dictionary)
+        update_time_str = v_dict.get('update_time')
+        if update_time_str:
+            try:
+                update_dt = datetime.datetime.strptime(update_time_str, '%Y-%m-%d')
+                if (now - update_dt).total_seconds() <= 120:
+                    v_dict['status'] = 'Online'
+                    online_count += 1
+                else:
+                    v_dict['status'] = 'X'
+            except ValueError:
+                # This can happen if update_time_str is not in the expected format
+                v_dict['status'] = 'Time Error'
+        else:
+            # update_time was None from model_to_dict2
+            v_dict['status'] = 'No Update Time'
+
+    # Ensure 'status' key exists in all device dicts before sorting, if not set above
+    for k, v_dict in devices.items():
+        if 'status' not in v_dict:
+            v_dict['status'] = 'Unknown'
+
 
     sorted_devices = sorted(devices.items(), key=custom_sort, reverse=True)
     new_ordered_dict = {}
